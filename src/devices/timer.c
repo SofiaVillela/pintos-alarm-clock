@@ -97,8 +97,10 @@ timer_sleep (int64_t ticks)
   t->tick_despertar = start + ticks;
   
   ASSERT (intr_get_level () == INTR_ON);
-  while (timer_elapsed (start) < ticks) 
-    thread_yield ();
+  enum intr_level estado_anterior = intr_disable ();
+  list_push_back(&lista_adormecidas, &t->elem);
+  thread_block();
+  intr_set_level(estado_anterior);
 }
 
 /* Sleeps for approximately MS milliseconds.  Interrupts must be
