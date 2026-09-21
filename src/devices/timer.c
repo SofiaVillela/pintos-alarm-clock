@@ -97,6 +97,7 @@ timer_sleep (int64_t ticks)
   t->tick_despertar = start + ticks;
   
   ASSERT (intr_get_level () == INTR_ON);
+  if(ticks <= 0) return;
   enum intr_level estado_anterior = intr_disable ();
   list_push_back(&lista_adormecidas, &t->elem);
   thread_block();
@@ -178,6 +179,18 @@ static void
 timer_interrupt (struct intr_frame *args UNUSED)
 {
   ticks++;
+  struct list_elem *e = list_begin(&lista_adormecidas);
+  while(e != list_end(&lista_adormecidas))
+  {
+    struct thread *t  = list_entry(e, struct thread, elem);
+    if(t->tick_despertar <= ticks)
+    {
+      e = list_remove (e);
+      thread_unblock (t);
+    }
+    else e = list_next (e);
+    
+  }
   thread_tick ();
 }
 
